@@ -1,0 +1,15 @@
+{
+  "name": "banjoi",
+  "version": "0.0.1",
+  "description": "banjoi scraping",
+  "main": "index.js",
+  "dependencies": {
+    "puppeteer": "^1.10.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "sosmii",
+  "license": "MIT"
+}
