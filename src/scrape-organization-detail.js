@@ -8,7 +8,7 @@ const consts = require('./lib/consts');
 const sleep = require('./lib/util').sleep;
 
 (async () => {
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ headless: false });
     const page = await browser.newPage();
 
     const writeStream = fs.createWriteStream(consts.RESULT_FILE_DESTINATION, { flags: 'a' });
@@ -17,21 +17,21 @@ const sleep = require('./lib/util').sleep;
     const reader = readline.createInterface({ input: readStream });
     reader
         .on('line', async targetLink => {
-            const resultArray = scrapePage(page, targetLink);
-            writeResultToCSV(resultArray, writeStream);
+            const resultArray = await scrapePage(page, targetLink);
+            // writeResultToCSV(resultArray, writeStream);
         })
         .on('close', () => {
-            await browser.close();
+            // await browser.close();
         })
 })();
 
 const scrapePage = async (page, targetLink) => {
     sleep(10000);
-    await page.goto(targetLink, WAIT_OPTION);
+    await page.goto(targetLink, consts.WAIT_OPTION);
+    console.log('here');
 
-    let resultArray;
-    await page.$$eval('#basic h3', elements => {
-
+    let resultArray = [];
+    await page.$$eval('#basic h3', (elements, consts, resultArray) => {
         consts.SCRAPING_TARGETS
             .filter(target => target.tag === 'h3' && target.type === 'text')
             .forEach(target => {
@@ -39,6 +39,8 @@ const scrapePage = async (page, targetLink) => {
                     return target.label === node.textContent
                 });
 
+                console.log(target.label);
+                console.log(matchedNodes);
                 const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
                     .querySelector('div').textContent.trim()
 
@@ -47,7 +49,8 @@ const scrapePage = async (page, targetLink) => {
                     order: target.order
                 });
             });
-    });
+    }, consts, resultArray);
+    // console.log(resultArray);
 
     await page.$$eval('#basic h4', elements => {
 
@@ -93,8 +96,8 @@ const scrapePage = async (page, targetLink) => {
     }).map(e => e.label);
 }
 
-const writeResultToCSV = async (resultArray, writeStream) => {
-    if (!result) {
+const writeResultToCSV = (resultArray, writeStream) => {
+    if (!resultArray) {
         throw new Error();
     }
 

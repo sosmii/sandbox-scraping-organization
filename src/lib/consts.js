@@ -3,8 +3,8 @@ const path = require('path');
 module.exports = {
     WAIT_OPTION: { waitUntil: 'networkidle2' },
     URL_ORGANIZATION_LIST_PAGE: 'https://fields.canpan.info/organization/',
-    LINK_FILE_DESTINATION: path.resolve('../output/links.txt'),
-    RESULT_FILE_DESTINATION: path.resolve('../output/result.csv'),
+    LINK_FILE_DESTINATION: path.resolve(process.argv[1], '../../output/links.txt'),
+    RESULT_FILE_DESTINATION: path.resolve(process.argv[1], '../../output/result.csv'),
     SCRAPING_TARGETS: [
         {
             label: '法人の種類',
