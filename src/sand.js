@@ -6,45 +6,98 @@ const readline = require('readline');
 const WAIT_OPTION = { waitUntil: 'networkidle2' }
 const URL_ORGANIZATION_LIST_PAGE = 'https://fields.canpan.info/organization/detail/1384221311';
 
-// ・主たる事業所の所在地 : 情報を送る時/イベント誘う時に絞れる
 // ・電話番号 : アポの時にとりあえずあるとかけれるため
 // ・URL（URL内全部情報）: 情報集めて提案する時に必要
 const SCRAPING_TARGETS = [
     {
         label: '法人の種類',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
     },
     {
         label: '団体名（法人名称）',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
     },
     {
         label: '代表者役職',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
     },
     {
         label: '代表者氏名',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
+    },
+    {
+        label: '郵便番号',
+        tag: 'h4',
+        type: 'text'
+    },
+    {
+        label: '都道府県',
+        tag: 'h4',
+        type: 'text'
+    },
+    {
+        label: '市区町村',
+        tag: 'h4',
+        type: 'text'
+    },
+    {
+        label: '詳細住所',
+        tag: 'h4',
+        type: 'text'
     },
     {
         label: 'お問い合わせ用メールアドレス',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
+    },
+    {
+        label: '電話番号',
+        tag: 'h4',
+        type: 'text'
+    },
+    {
+        label: '連絡先区分',
+        tag: 'h4',
+        type: 'text'
+    },
+    {
+        label: '連絡可能時間',
+        tag: 'h4',
+        type: 'text'
+    },
+    {
+        label: '連絡可能曜日',
+        tag: 'h4',
+        type: 'text'
+    },
+    {
+        label: '備考',
+        tag: 'h4',
+        type: 'text'
     },
     {
         label: '助成金・補助金・物品等、他の組織から受けた支援の実績',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
     },
     {
         label: '他のNPO・市民活動団体との協働、他の学協会との共同研究・協働の実績',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
     },
     {
         label: '企業・団体との協働・共同研究の実績',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
     },
     {
         label: '行政との協働（委託事業など）の実績',
-        tag: 'h3'
+        tag: 'h3',
+        type: 'text'
     }
 ];
 
