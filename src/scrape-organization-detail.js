@@ -17,8 +17,8 @@ const sleep = require('./lib/util').sleep;
     const reader = readline.createInterface({ input: readStream });
     reader
         .on('line', async targetLink => {
-            const result = scrapePage(page, targetLink);
-            writeResultToFile(result, writeStream);
+            const resultArray = scrapePage(page, targetLink);
+            writeResultToCSV(resultArray, writeStream);
         })
         .on('close', () => {
             await browser.close();
@@ -29,18 +29,76 @@ const scrapePage = async (page, targetLink) => {
     sleep(10000);
     await page.goto(targetLink, WAIT_OPTION);
 
-    const result = await page.$$eval('#basic h3', elements => {
-        const hojinNodes = elements.filter(e => {
-            return e.textContent === '法人の種類'
-        });
+    let resultArray;
+    await page.$$eval('#basic h3', elements => {
 
-        return hojinNodes[0].parentNode.parentNode.querySelector('td:last-child')
-            .querySelector('div').textContent.trim();
+        consts.SCRAPING_TARGETS
+            .filter(target => target.tag === 'h3' && target.type === 'text')
+            .forEach(target => {
+                const matchedNodes = elements.filter(node => {
+                    return target.label === node.textContent
+                });
+
+                const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
+                    .querySelector('div').textContent.trim()
+
+                resultArray.push({
+                    value: matchedValue,
+                    order: target.order
+                });
+            });
     });
 
-    console.log(result);
+    await page.$$eval('#basic h4', elements => {
+
+        consts.SCRAPING_TARGETS
+            .filter(target => target.tag === 'h4' && target.type === 'text')
+            .forEach(target => {
+                const matchedNodes = elements.filter(node => {
+                    return target.label === node.textContent
+                });
+
+                const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
+                    .querySelector('div').textContent.trim()
+
+                resultArray.push({
+                    value: matchedValue,
+                    order: target.order
+                });
+            });
+
+        consts.SCRAPING_TARGETS
+            .filter(target => target.tag === 'h4' && target.type === 'anchor')
+            .forEach(target => {
+                const matchedNodes = elements.filter(node => {
+                    return target.label === node.textContent
+                });
+
+                const anchorNode = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
+                    .querySelector('div').querySelector('a');
+
+                const matchedValue = anchorNode ? anchorNode.href : '■■■'; // todo
+
+                resultArray.push({
+                    value: matchedValue,
+                    order: target.order
+                });
+            });
+    });
+
+    return resultArray.sort((a, b) => {
+        if (a.order < b.order) return -1;
+        if (a.order > b.order) return 1;
+        return 0;
+    }).map(e => e.label);
 }
 
-const writeResultToFile = async (result, writeStream) => {
-    stream.write(links + '\n');
+const writeResultToCSV = async (resultArray, writeStream) => {
+    if (!result) {
+        throw new Error();
+    }
+
+    resultArray.forEach(e => {
+        writeStream.write(e + '\n');
+    });
 }
