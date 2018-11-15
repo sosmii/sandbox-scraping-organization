@@ -50,6 +50,51 @@ const SCRAPING_TARGETS = [
         type: 'text'
     },
     {
+        label: '団体ホームページ',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
+        label: '団体ブログ',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
+        label: 'Facebook',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
+        label: 'Twitter',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
+        label: '代表者ホームページ（ブログ）',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
+        label: '寄付',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
+        label: 'ボランティア',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
+        label: '関連ページ',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
+        label: '閲覧書類',
+        tag: 'h4',
+        type: 'anchor'
+    },
+    {
         label: 'お問い合わせ用メールアドレス',
         tag: 'h3',
         type: 'text'
