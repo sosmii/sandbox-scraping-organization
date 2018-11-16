@@ -4,6 +4,7 @@
   "description": "banjoi scraping",
   "main": "index.js",
   "dependencies": {
+    "line-by-line": "^0.1.6",
     "puppeteer": "^1.10.0"
   },
   "devDependencies": {},

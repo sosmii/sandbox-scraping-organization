@@ -2,36 +2,39 @@
 
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const readline = require('readline');
+// const readline = require('readline');
+const LineByLineReader = require('line-by-line');
 
 const consts = require('./lib/consts');
 const sleep = require('./lib/util').sleep;
 
 (async () => {
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
 
     const writeStream = fs.createWriteStream(consts.RESULT_FILE_DESTINATION, { flags: 'a' });
+    setupCsv(writeStream);
 
-    const readStream = fs.createReadStream(consts.LINK_FILE_DESTINATION, { encoding: 'utf8' });
-    const reader = readline.createInterface({ input: readStream });
+    const reader = new LineByLineReader(consts.LINK_FILE_DESTINATION);
     reader
         .on('line', async targetLink => {
+            reader.pause();
             const resultArray = await scrapePage(page, targetLink);
-            // writeResultToCSV(resultArray, writeStream);
+            writeResultToCSV(resultArray, writeStream);
+            reader.resume();
         })
-        .on('close', () => {
-            // await browser.close();
+        .on('end', async () => {
+            await browser.close();
         })
 })();
 
 const scrapePage = async (page, targetLink) => {
-    sleep(10000);
+    await sleep(1000);
     await page.goto(targetLink, consts.WAIT_OPTION);
-    console.log('here');
 
-    let resultArray = [];
-    await page.$$eval('#basic h3', (elements, consts, resultArray) => {
+    const evalResultH3 = await page.$$eval('h3', (elements, consts) => {
+        let evalResult = [];
+
         consts.SCRAPING_TARGETS
             .filter(target => target.tag === 'h3' && target.type === 'text')
             .forEach(target => {
@@ -39,20 +42,20 @@ const scrapePage = async (page, targetLink) => {
                     return target.label === node.textContent
                 });
 
-                console.log(target.label);
-                console.log(matchedNodes);
                 const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
                     .querySelector('div').textContent.trim()
 
-                resultArray.push({
+                evalResult.push({
                     value: matchedValue,
                     order: target.order
                 });
             });
-    }, consts, resultArray);
-    // console.log(resultArray);
 
-    await page.$$eval('#basic h4', elements => {
+        return evalResult;
+    }, consts);
+
+    const evalResultH4 = await page.$$eval('h4', (elements, consts) => {
+        let evalResult = [];
 
         consts.SCRAPING_TARGETS
             .filter(target => target.tag === 'h4' && target.type === 'text')
@@ -64,7 +67,7 @@ const scrapePage = async (page, targetLink) => {
                 const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
                     .querySelector('div').textContent.trim()
 
-                resultArray.push({
+                evalResult.push({
                     value: matchedValue,
                     order: target.order
                 });
@@ -80,28 +83,51 @@ const scrapePage = async (page, targetLink) => {
                 const anchorNode = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
                     .querySelector('div').querySelector('a');
 
-                const matchedValue = anchorNode ? anchorNode.href : '■■■'; // todo
+                const matchedValue = anchorNode ? anchorNode.href : null;
 
-                resultArray.push({
+                evalResult.push({
                     value: matchedValue,
                     order: target.order
                 });
             });
-    });
 
-    return resultArray.sort((a, b) => {
+        return evalResult;
+    }, consts);
+
+    return evalResultH3.concat(evalResultH4)
+        .sort((a, b) => {
+            if (a.order < b.order) return -1;
+            if (a.order > b.order) return 1;
+            return 0;
+        }).map(e => e.value);
+}
+
+const setupCsv = (writeStream) => {
+    const sortedLabels = consts.SCRAPING_TARGETS.sort((a, b) => {
         if (a.order < b.order) return -1;
         if (a.order > b.order) return 1;
         return 0;
-    }).map(e => e.label);
+    }).map(e => e.label)
+    let theLabel = '';
+    sortedLabels.forEach((e, idx, self) => {
+        if (idx === 0) {
+            theLabel = `"${e}"`;
+            return;
+        }
+        theLabel = `${theLabel}\t"${e}"`
+    });
+    writeStream.write(`${theLabel}\n`);
 }
 
 const writeResultToCSV = (resultArray, writeStream) => {
     if (!resultArray) {
-        throw new Error();
+        return;
     }
 
-    resultArray.forEach(e => {
-        writeStream.write(e + '\n');
+    resultArray.forEach((e, idx, self) => {
+        writeStream.write(`"${e}"\t`);
+        if ((idx + 1) === self.length) {
+            writeStream.write('\n');
+        }
     });
 }
