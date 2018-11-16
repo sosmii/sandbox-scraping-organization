@@ -26,6 +26,8 @@ const sleep = require('./lib/util').sleep;
         await sleep(10000);
         await page.goto(nextLink, consts.WAIT_OPTION);
     }
+
+    await browser.close();
 })();
 
 const retrieveNextLink = async page => {
