@@ -30,10 +30,10 @@ const sleep = require('./lib/util').sleep;
                 reader.resume();
             } catch (e) {
                 if (e.name === 'ScrapeError') {
-                    console.log(`Scrape Error @ Scrape Count: ${scrapeCount}`)
+                    console.log(`Scrape Error @ Scrape Count: ${scrapeCount}`);
                 }
                 if (e.name === 'WriteCsvError') {
-                    console.log(`WriteCsv Error @ Scrape Count: ${scrapeCount}`)
+                    console.log(`WriteCsv Error @ Scrape Count: ${scrapeCount}`);
                 }
 
                 reader.resume();
