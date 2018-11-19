@@ -29,13 +29,6 @@ const sleep = require('./lib/util').sleep;
 
                 reader.resume();
             } catch (e) {
-                if (e.name === 'ScrapeError') {
-                    console.log(`Scrape Error @ Scrape Count: ${scrapeCount}`);
-                }
-                if (e.name === 'WriteCsvError') {
-                    console.log(`WriteCsv Error @ Scrape Count: ${scrapeCount}`);
-                }
-
                 reader.resume();
             }
         })
@@ -118,7 +111,7 @@ const scrapePage = async (page, targetLink) => {
                 return 0;
             }).map(e => e.value);
     } catch (e) {
-        e.name = 'ScrapeError';
+        console.log(`Scrape Error @ ${targetLink}`);
         throw e;
     }
 }
@@ -153,7 +146,7 @@ const writeResultToCSV = (resultArray, writeStream) => {
             }
         });
     } catch (e) {
-        e.name = 'WriteCsvError';
+        console.log(`WriteCsv Error`);
         throw e;
     }
 }
