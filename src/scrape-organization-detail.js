@@ -14,13 +14,30 @@ const sleep = require('./lib/util').sleep;
     const writeStream = fs.createWriteStream(consts.RESULT_FILE_DESTINATION, { flags: 'a' });
     setupCsv(writeStream);
 
+    let scrapeCount = 1;
     const reader = new LineByLineReader(consts.LINK_FILE_DESTINATION);
     reader
         .on('line', async targetLink => {
-            reader.pause();
-            const resultArray = await scrapePage(page, targetLink);
-            writeResultToCSV(resultArray, writeStream);
-            reader.resume();
+            try {
+                reader.pause();
+
+                console.log(`Scrape Count: ${scrapeCount}`);
+                scrapeCount++;
+
+                const resultArray = await scrapePage(page, targetLink);
+                writeResultToCSV(resultArray, writeStream);
+
+                reader.resume();
+            } catch (e) {
+                if (e.name === 'ScrapeError') {
+                    console.log(`Scrape Error @ Scrape Count: ${scrapeCount}`)
+                }
+                if (e.name === 'WriteCsvError') {
+                    console.log(`WriteCsv Error @ Scrape Count: ${scrapeCount}`)
+                }
+
+                reader.resume();
+            }
         })
         .on('end', async () => {
             await browser.close();
@@ -28,77 +45,82 @@ const sleep = require('./lib/util').sleep;
 })();
 
 const scrapePage = async (page, targetLink) => {
-    await sleep(1000);
-    await page.goto(targetLink, consts.WAIT_OPTION);
+    try {
+        await sleep(1000);
+        await page.goto(targetLink, consts.WAIT_OPTION);
 
-    const evalResultH3 = await page.$$eval('h3', (elements, consts) => {
-        let evalResult = [];
+        const evalResultH3 = await page.$$eval('h3', (elements, consts) => {
+            let evalResult = [];
 
-        consts.SCRAPING_TARGETS
-            .filter(target => target.tag === 'h3' && target.type === 'text')
-            .forEach(target => {
-                const matchedNodes = elements.filter(node => {
-                    return target.label === node.textContent
+            consts.SCRAPING_TARGETS
+                .filter(target => target.tag === 'h3' && target.type === 'text')
+                .forEach(target => {
+                    const matchedNodes = elements.filter(node => {
+                        return target.label === node.textContent
+                    });
+
+                    const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
+                        .querySelector('div').textContent.trim()
+
+                    evalResult.push({
+                        value: matchedValue,
+                        order: target.order
+                    });
                 });
 
-                const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
-                    .querySelector('div').textContent.trim()
+            return evalResult;
+        }, consts);
 
-                evalResult.push({
-                    value: matchedValue,
-                    order: target.order
-                });
-            });
+        const evalResultH4 = await page.$$eval('h4', (elements, consts) => {
+            let evalResult = [];
 
-        return evalResult;
-    }, consts);
+            consts.SCRAPING_TARGETS
+                .filter(target => target.tag === 'h4' && target.type === 'text')
+                .forEach(target => {
+                    const matchedNodes = elements.filter(node => {
+                        return target.label === node.textContent
+                    });
 
-    const evalResultH4 = await page.$$eval('h4', (elements, consts) => {
-        let evalResult = [];
+                    const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
+                        .querySelector('div').textContent.trim()
 
-        consts.SCRAPING_TARGETS
-            .filter(target => target.tag === 'h4' && target.type === 'text')
-            .forEach(target => {
-                const matchedNodes = elements.filter(node => {
-                    return target.label === node.textContent
-                });
-
-                const matchedValue = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
-                    .querySelector('div').textContent.trim()
-
-                evalResult.push({
-                    value: matchedValue,
-                    order: target.order
-                });
-            });
-
-        consts.SCRAPING_TARGETS
-            .filter(target => target.tag === 'h4' && target.type === 'anchor')
-            .forEach(target => {
-                const matchedNodes = elements.filter(node => {
-                    return target.label === node.textContent
+                    evalResult.push({
+                        value: matchedValue,
+                        order: target.order
+                    });
                 });
 
-                const anchorNode = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
-                    .querySelector('div').querySelector('a');
+            consts.SCRAPING_TARGETS
+                .filter(target => target.tag === 'h4' && target.type === 'anchor')
+                .forEach(target => {
+                    const matchedNodes = elements.filter(node => {
+                        return target.label === node.textContent
+                    });
 
-                const matchedValue = anchorNode ? anchorNode.href : null;
+                    const anchorNode = matchedNodes[0].parentNode.parentNode.querySelector('td:last-child')
+                        .querySelector('div').querySelector('a');
 
-                evalResult.push({
-                    value: matchedValue,
-                    order: target.order
+                    const matchedValue = anchorNode ? anchorNode.href : null;
+
+                    evalResult.push({
+                        value: matchedValue,
+                        order: target.order
+                    });
                 });
-            });
 
-        return evalResult;
-    }, consts);
+            return evalResult;
+        }, consts);
 
-    return evalResultH3.concat(evalResultH4)
-        .sort((a, b) => {
-            if (a.order < b.order) return -1;
-            if (a.order > b.order) return 1;
-            return 0;
-        }).map(e => e.value);
+        return evalResultH3.concat(evalResultH4)
+            .sort((a, b) => {
+                if (a.order < b.order) return -1;
+                if (a.order > b.order) return 1;
+                return 0;
+            }).map(e => e.value);
+    } catch (e) {
+        e.name = 'ScrapeError';
+        throw e;
+    }
 }
 
 const setupCsv = (writeStream) => {
@@ -119,14 +141,19 @@ const setupCsv = (writeStream) => {
 }
 
 const writeResultToCSV = (resultArray, writeStream) => {
-    if (!resultArray) {
-        return;
-    }
-
-    resultArray.forEach((e, idx, self) => {
-        writeStream.write(`"${e}"\t`);
-        if ((idx + 1) === self.length) {
-            writeStream.write('\n');
+    try {
+        if (!resultArray) {
+            return;
         }
-    });
+
+        resultArray.forEach((e, idx, self) => {
+            writeStream.write(`"${e}"\t`);
+            if ((idx + 1) === self.length) {
+                writeStream.write('\n');
+            }
+        });
+    } catch (e) {
+        e.name = 'WriteCsvError';
+        throw e;
+    }
 }
