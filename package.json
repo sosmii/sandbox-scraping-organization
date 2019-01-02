@@ -1,16 +1,15 @@
 {
-  "name": "banjoi",
-  "version": "0.0.1",
-  "description": "banjoi scraping",
-  "main": "index.js",
+  "name": "zzz-sandbox-scraping-organization",
+  "version": "1.0.0",
+  "description": "CANPANFIELDSからNPOの情報をスクレイピングするサンプル",
   "dependencies": {
     "line-by-line": "^0.1.6",
     "puppeteer": "^1.10.0"
   },
-  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "fetch-link": "node ./src/fetch-organization-links",
+    "scrape": "node ./src/scrape-organization-detail"
   },
-  "author": "sosmii",
+  "author": "sosmii <setsuya.osumi.private@gmail.com>",
   "license": "MIT"
 }
