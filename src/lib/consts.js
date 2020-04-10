@@ -168,5 +168,17 @@ module.exports = {
       type: 'text',
       order: 27,
     },
+    {
+      label: '主たる活動分野',
+      tag: 'h4',
+      type: 'text',
+      order: 28,
+    },
+    {
+      label: '\xa0',
+      tag: 'h4',
+      type: 'text',
+      order: 29,
+    },
   ],
 };
