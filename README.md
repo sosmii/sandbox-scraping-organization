@@ -1,4 +1,4 @@
-# zzz-sandbox-scraping-organization
+# sandbox-scraping-organization
 CANPANFIELDSからNPOの情報をスクレイピングするサンプル.  
 直近で必要だったので、とりあえず動けばいいやの精神で雑に作った.
 
