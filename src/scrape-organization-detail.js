@@ -128,7 +128,7 @@ const setupCsv = (writeStream) => {
       theLabel = `"${e}"`;
       return;
     }
-    theLabel = `${theLabel}\t"${e}"`;
+    theLabel = `${theLabel},"${e}"`;
   });
   writeStream.write(`${theLabel}\n`);
 };
@@ -140,7 +140,7 @@ const writeResultToCSV = (resultArray, writeStream) => {
     }
 
     resultArray.forEach((e, idx, self) => {
-      writeStream.write(`"${e}"\t`);
+      writeStream.write(`"${e}",`);
       if ((idx + 1) === self.length) {
         writeStream.write('\n');
       }
