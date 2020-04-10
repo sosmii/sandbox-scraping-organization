@@ -123,7 +123,7 @@ const setupCsv = (writeStream) => {
     return 0;
   }).map((e) => e.label);
   let theLabel = '';
-  sortedLabels.forEach((e, idx, self) => {
+  sortedLabels.forEach((e, idx) => {
     if (idx === 0) {
       theLabel = `"${e}"`;
       return;
